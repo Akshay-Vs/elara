@@ -9,7 +9,7 @@ env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
-  debugBuild:
+  releaseBuild:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,22 +28,53 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Set up JDK 24
+      # Check for cached JDK
+      - name: Cache JDK
+        id: cache-jdk
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/wrapper
+            ~/.gradle/caches
+          key: jdk-17-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            jdk-17-gradle-${{ runner.os }}-
+
+      # Setup Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Setup JDK only if not cached
+      - name: Set up JDK 17
+        if: steps.cache-jdk.outputs.cache-hit != 'true'
         uses: actions/setup-java@v4
         with:
-          java-version: '24'
+          java-version: '17'
           distribution: 'temurin'
           cache: gradle
+
+      # Setup signing for release build
+      - name: Setup Android signing
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > apps/android/app/keystore.jks
+          echo "STORE_FILE=keystore.jks" >> apps/android/gradle.properties
+          echo "STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> apps/android/gradle.properties
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> apps/android/gradle.properties
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> apps/android/gradle.properties
 
       - name: Grant execute permission for gradlew
         run: chmod +x apps/android/gradlew
 
-      - name: Build Debug APK with NX
+      - name: Build Release APK with NX
         run: |
           pnpm nx run @elara/android:release
 
-      - name: Upload Debug APK
+      - name: Verify Release APK exists
+        run: |
+          ls -la apps/android/app/build/outputs/apk/release/
+
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
+          name: release-apk
           path: apps/android/app/build/outputs/apk/release/*.apk
