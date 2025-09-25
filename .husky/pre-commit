@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+clear
+pnpm dlx lint-staged
