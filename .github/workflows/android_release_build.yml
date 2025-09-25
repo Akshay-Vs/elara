@@ -13,21 +13,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      
       # Install pnpm
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
           version: 10.17.1
           run_install: false
-
+          
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
-
+          
       - run: pnpm install --frozen-lockfile
-
+      
+      # Clean any existing Gradle cache issues
+      - name: Clean Gradle cache
+        run: |
+          rm -rf ~/.gradle/caches/
+          rm -rf ~/.gradle/wrapper/
+          rm -rf apps/android/.gradle/
+      
       # Check for cached JDK
       - name: Cache JDK
         id: cache-jdk
@@ -39,11 +46,11 @@ jobs:
           key: jdk-17-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             jdk-17-gradle-${{ runner.os }}-
-
+        
       # Setup Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
+        
       # Setup JDK only if not cached
       - name: Set up JDK 17
         if: steps.cache-jdk.outputs.cache-hit != 'true'
@@ -52,7 +59,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
-
+          
       # Setup signing for release build
       - name: Setup Android signing
         run: |
@@ -61,20 +68,51 @@ jobs:
           echo "STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> apps/android/gradle.properties
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> apps/android/gradle.properties
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> apps/android/gradle.properties
-
+          
       - name: Grant execute permission for gradlew
         run: chmod +x apps/android/gradlew
-
-      - name: Build Release APK with NX
+        
+      # Configure Gradle for better reliability
+      - name: Configure Gradle
         run: |
-          pnpm nx run @elara/android:release
-
+          mkdir -p ~/.gradle
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m" >> ~/.gradle/gradle.properties
+          echo "org.gradle.parallel=true" >> ~/.gradle/gradle.properties
+          echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
+          echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+          echo "android.useAndroidX=true" >> ~/.gradle/gradle.properties
+        
+      # Retry mechanism for build
+      - name: Build Release APK with NX (with retry)
+        run: |
+          set +e
+          for i in {1..3}; do
+            echo "Build attempt $i"
+            pnpm nx run @elara/android:release && break
+            if [ $i -eq 3 ]; then
+              echo "Build failed after 3 attempts"
+              exit 1
+            fi
+            echo "Build failed, retrying in 30 seconds..."
+            sleep 30
+          done
+          
       - name: Verify Release APK exists
         run: |
           ls -la apps/android/app/build/outputs/apk/release/
-
+          
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: apps/android/app/build/outputs/apk/release/*.apk
+          
+      # Optional: Upload to Play Store (uncomment if needed)
+      # - name: Upload to Play Store
+      #   uses: r0adkll/upload-google-play@v1.1.3
+      #   with:
+      #     serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+      #     packageName: com.yourcompany.elara
+      #     releaseFiles: apps/android/app/build/outputs/apk/release/*.apk
+      #     track: internal
+      #     status: completed
