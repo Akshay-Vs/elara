@@ -1,24 +1,25 @@
 {
-  "name": "@elara/root",
-  "version": "0.0.0",
-  "Author": "akvs",
-  "description": "Elara is a cross platform agentic AI assistant.",
-  "license": "GNU Affero General Public License",
-  "scripts": {
-    "prepare": "husky"
-  },
-  "private": true,
-  "devDependencies": {
-    "@commitlint/config-conventional": "^20.0.0",
-    "@nx/js": "21.5.3",
-    "@swc-node/register": "~1.9.1",
-    "@swc/core": "~1.5.7",
-    "@swc/helpers": "~0.5.11",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.1",
-    "nx": "21.5.3",
-    "prettier": "^2.6.2",
-    "tslib": "^2.3.0",
-    "typescript": "~5.9.2"
-  }
+	"name": "@elara/root",
+	"version": "0.0.0",
+	"Author": "akvs",
+	"description": "Elara is a cross platform agentic AI assistant.",
+	"license": "GNU Affero General Public License",
+	"scripts": {
+		"prepare": "husky"
+	},
+	"private": true,
+	"devDependencies": {
+		"@changesets/cli": "^2.29.7",
+		"@commitlint/config-conventional": "^20.0.0",
+		"@nx/js": "21.5.3",
+		"@swc-node/register": "~1.9.1",
+		"@swc/core": "~1.5.7",
+		"@swc/helpers": "~0.5.11",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.2.1",
+		"nx": "21.5.3",
+		"prettier": "^2.6.2",
+		"tslib": "^2.3.0",
+		"typescript": "~5.9.2"
+	}
 }
