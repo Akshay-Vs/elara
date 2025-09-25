@@ -4,4 +4,9 @@ packages:
   - services/*
 
 autoInstallPeers: true
+
+onlyBuiltDependencies:
+  - '@swc/core'
+  - nx
+
 strictPeerDependencies: false
