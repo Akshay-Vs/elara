@@ -1,0 +1,114 @@
+#!/usr/bin/env sh
+
+MSG_FILE="$1"
+COMMIT_MSG="$(cat "$MSG_FILE")"
+
+# Get type before colon (support type(scope): or type:)
+TYPE=$(echo "$COMMIT_MSG" | sed -E 's/^(\w+)(\([^)]+\))?:.*/\1/')
+
+# Emoji map
+get_emoji() {
+  case "$1" in
+    feat|feature) echo "" ;;
+    fix) echo "" ;;
+    docs|doc) echo "" ;;
+    style) echo "" ;;
+    refactor|refac) echo "" ;;
+    perf|performance) echo "󱐋" ;;
+    test|tests) echo "󰙨" ;;
+    build) echo "" ;;
+    ci) echo "󰖵" ;;
+    chore) echo "" ;;
+    revert) echo "" ;;
+    init|initial) echo "" ;;
+    release) echo "" ;;
+    wip|WIP) echo "󰋊" ;;
+    merge|Merge) echo "" ;;
+    *) echo "" ;;
+  esac
+}
+
+EMOJI=$(get_emoji "$TYPE")
+
+# Only prepend if emoji is not already present
+if [ -n "$EMOJI" ] && ! echo "$COMMIT_MSG" | grep -q "$EMOJI"; then
+  echo "$EMOJI $COMMIT_MSG" > "$MSG_FILE"
+  COMMIT_MSG="$EMOJI $COMMIT_MSG"
+fi
+
+# ASCII Art
+ascii_art=(
+"
+╔═══════════════════════╗
+║   COMMIT SUCCESSFUL   ║
+╚═══════════════════════╝"
+
+"
+┌───────────────────────┐
+│   ✔ Commit Accepted   │
+└───────────────────────┘
+"
+
+"
+ ╭────────────────────────╮
+ │  ✓ Pushed With Honor   │
+ ╰────────────────────────╯
+"
+
+"
+ +------------------------+
+ |    Commit Logged 󰈙     |
+ |  Onto the timeline 󱑕   |
+ +------------------------+
+ "
+)
+
+messages=(
+  "Looks solid. Did someone else write this?"
+  "Not bad at all. Suspiciously competent."
+  "Commit approved. Shocking, honestly."
+  "Well-structured. Are you feeling okay?"
+  "Code looks good. Still smells like tech debt, though."
+  "Nice. Finally a commit that won’t haunt you in 6 months."
+  "Decent work. You’re learning. Slowly."
+  "This actually runs? Color me impressed."
+  "Syntax checks out. Brain cells? TBD."
+  "You’ve written worse. This is... survivable."
+)
+
+breaks=(
+  "Take a breath. Your anxiety isn't going to refactor itself."
+  "Hydrate. Your body is 70% water, unlike your test coverage."
+  "Stretch those wrists before they file a bug report on you."
+  "Blink twice. No, your dark theme isn’t helping your eyes."
+  "Get up. Your blood flow is more stale than your Redux store."
+  "Look away from the screen. Let your neurons defrag."
+  "Touch your toes. Or touch grass. Either works."
+  "Take 30 seconds to remember there’s life outside the repo."
+  "Stand up. You’ve been hunching like a deprecated API."
+  "Walk a bit. Or just pace while rethinking that last regex."
+)
+
+
+
+# Run commitlint after emoji was added
+if pnpm dlx commitlint --edit "$MSG_FILE"; then
+  msg="${messages[RANDOM % ${#messages[@]}]}"
+  art="${ascii_art[RANDOM % ${#ascii_art[@]}]}"
+  break_prompt="${breaks[RANDOM % ${#breaks[@]}]}"
+
+  clear
+  echo ""
+  echo "$art"
+  echo ""
+  echo " $msg"
+  echo " $break_prompt"
+  echo ""
+else
+  echo ""
+  echo "✖ Commit rejected. Like your crush."
+  echo " Format: type(scope): brief summary"
+  echo "   Example: fix(login): prevent crash on invalid token"
+  echo ""
+  exit 1
+fi
