@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             ElaraTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "akvs",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -42,6 +42,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     ElaraTheme {
-        Greeting("Android")
+        Greeting("akvs")
     }
 }
