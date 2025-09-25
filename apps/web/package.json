@@ -2,6 +2,19 @@
 	"name": "@elara/web",
 	"version": "0.0.1",
 	"private": true,
+	"nx": {
+		"targets": {
+			"test": {
+				"executor": "@nx/jest:jest",
+				"outputs": [
+					"{projectRoot}/test-output/jest/coverage"
+				],
+				"options": {
+					"jestConfig": "apps/web/jest.config.ts"
+				}
+			}
+		}
+	},
 	"dependencies": {
 		"next": "~15.2.4",
 		"react": "19.0.0",
