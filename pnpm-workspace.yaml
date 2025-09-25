@@ -1,5 +1,7 @@
 packages:
-  - "packages/*"
+  - apps/*
+  - packages/ts/**/*
+  - services/*
 
 autoInstallPeers: true
 strictPeerDependencies: false
